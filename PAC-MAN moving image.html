@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Subroutine Hieararchy</title>
+
+<script>
+
+    var canvas;   // The canvas that is used as the drawing surface
+    var graphics; // The 2D graphics context for drawing on the canvas.
+
+    var X_LEFT = -4;    // The xy limits for the coordinate system.
+    var X_RIGHT = 4;
+    var Y_BOTTOM = -3;
+    var Y_TOP = 3;
+    
+    var BACKGROUND = "black";  // The display is filled with this color before the scene is drawn.
+         
+    var pixelSize;  // The size of one pixel, in the transformed coordinates.
+      
+    var frameNumber =0; // Current frame number. goes up by one in each frame.
+
+	var x;              //version of frameNumber that goes up by 0.1
+	var mouthFrame=0;   //frame number for pac-man's mouth
+    var cameraFrame=0;  //frame number for scene panning
+	var runningFrame=0;	//frame number for character movements
+	var ghostPupilFrame=0; //frame number for ghost pupil movements
+
+
+
+
+//////////////////////for play area////////////////////////////	
+
+	function drawMap(){   //draws blue lines which make up play area
+	    graphics.lineWidth=0.04;
+		graphics.strokeStyle="blue";
+
+        //top
+
+		line(-7.5,0.8,7.5,0.8);
+		line(-7.5,0.8,-7.5,4.5); 
+		line(-9.5,0.8,-9.5,4.5);
+		line(-9.5,0.8,-15.5,0.8);
+		line(-15.5,0.8,-15.5,4.5);
+		line(-17.5,0.8,-17.5,4.5);
+		line(-17.5,0.8,-20,0.8)
+        
+		//bottom 
+
+		line(-3.5,-0.8,4.5,-0.8);
+		line(-3.5,-0.8,-3.5,-3.5);
+		line(-5.4,-0.8,-5.4,-3.5);
+		line(-5.4,-0.8,-11.3,-0.8);
+		line(-11.3,-0.8,-11.3,-3.5);
+		line(-13.2,-0.8,-13.2,-3.5);
+		line(-13.2,-0.8,-21,-0.8);
+	}
+	
+////////////////for Pac-Man//////////////////////////////////
+
+	function pacMouth(){    //draws pac-man's mouth
+
+	    graphics.save();
+
+	    graphics.fillStyle="black";
+		filledTriangle(graphics,-0.05*mouthFrame,0,0.05*mouthFrame,0);
+
+		graphics.restore(); 	
+	}
+	
+	
+	function pacBody(){  //draws pac-man's body
+
+		graphics.save(); 
+	
+		graphics.fillStyle="#fce700";
+		filledCircle();
+
+		graphics.restore(); 
+	}
+
+	
+	function drawRightPacMan(){  //draws the whole of pacman facing your right
+
+		graphics.save();
+
+		pacBody();
+		graphics.translate(0.51,0);
+		graphics.rotate(Math.PI/2);
+		graphics.scale(0.6,0.6);		
+		pacMouth();
+
+        graphics.restore(); 	
+}	
+
+
+    function drawLeftPacMan(){     //draws pacman facing your left
+	
+		graphics.save();
+
+		graphics.translate(-runningFrame,0) 
+		graphics.translate(4,0);
+		pacBody();
+
+		graphics.scale(-1,1);
+		graphics.translate(0.59,0);
+		graphics.rotate(Math.PI/2);
+		graphics.scale(0.6,0.6);
+		pacMouth();
+
+        graphics.restore(); 	
+	}	
+	
+
+//////////////for Ghosts////////////////////////////////////////
+
+	function ghostEyeBall(xTrans){   // draws white part of the ghost's eye
+		graphics.fillStyle="white";
+		graphics.translate(xTrans,0.08);
+		graphics.scale(0.28,0.35);
+		filledCircle();
+	}
+
+
+	function ghostPupil(){   //draws ghost's blue pupil
+
+		graphics.save();
+		
+		
+		graphics.fillStyle="#4572bf";
+		graphics.translate(-0.29,ghostPupilFrame)
+		graphics.scale(0.4,0.4);
+		filledCircle();
+		
+		graphics.restore();
+	}
+
+
+	function ghostEye(xTrans){    // draws ghost's eye
+
+		graphics.save();
+		
+		ghostEyeBall(xTrans);
+		ghostPupil();
+
+		graphics.restore();
+	}
+
+
+
+	function ghostScaredEye(xTrans){  //draws scared ghost eye
+      
+		graphics.save();
+		
+		graphics.strokeStyle="#CF749A";
+		graphics.lineWidth=0.56;
+
+		graphics.translate(xTrans,0)
+		graphics.scale(0.16,0.16);
+
+		line(0,0.5,0,-0.5);
+		line(0.5,0,-0.5,0);
+		
+		graphics.restore();
+  }
+
+
+    function ghostScaredmouth(){  //draws scared ghost mouth
+	 
+		graphics.save();
+		
+		graphics.strokeStyle="#CF749A";
+		graphics.lineWidth=0.04;
+		
+		line(-0.23,-0.35,-0.19,-0.35);
+		line(-0.19,-0.31,-0.07,-0.31);
+		line(-0.07,-0.35,0.04,-0.35);
+		line(0.04,-0.31,0.15,-0.31);
+		line(0.15,-0.35,0.26,-0.35);
+		line(0.26,-0.31,0.37,-0.31);
+		line(0.37,-0.35,0.41,-0.35);
+
+		graphics.restore();
+    }
+
+
+
+	function ghostHead(){  //draws top part of a ghost
+	
+		graphics.save();
+		filledCircle();
+		graphics.restore(); 
+	}
+	
+	
+	function ghostBody(){  //draws bottom part of a ghost
+	    
+		graphics.save();
+
+	    graphics.translate(0,-0.4);
+		graphics.scale(1,0.7);
+		filledRect();
+
+		graphics.restore(); 
+	
+	}
+	
+	
+	function drawGhost(colour,State){  //draws the whole ghost as one object
+	    
+		graphics.save();
+			
+		graphics.fillStyle=colour;
+		ghostHead();
+		ghostBody();
+
+		if(State ==="normal"){        //if the ghost is not scared of pac-man
+			ghostEye(0.08);   
+			ghostEye(-0.3); 
+		}
+		else if(State ==="scared"){   //if the ghost is scared of pac-man
+			ghostScaredEye(0.30);
+			ghostScaredEye(-0.06);
+			ghostScaredmouth();
+		}
+		
+		graphics.restore(); 
+	}
+	
+
+//////////////////for Ghost tails///////////////////////////
+
+
+	function triangle(transX){
+	
+		graphics.save();
+		
+		graphics.translate(transX,-0.78);
+		graphics.scale(0.6,0.285);
+		filledTriangle(graphics,-0.7,0,0.7,0);
+		
+		graphics.restore(); 
+	}
+
+
+	function threeTriangles(transX){   //draws a set of 3 triangles together
+	    graphics.save();
+	    
+	    graphics.fillStyle="black";
+		graphics.translate(transX,0);
+
+		triangle(-0.34);
+		triangle(0.34);
+		triangle(0);
+		
+	    graphics.restore();
+	}
+
+
+	function triangleTrail(){    //draws trail of triangles to act at ghosts' tail
+	
+	    for (let i =-20; i<=4;i++){
+	    	threeTriangles(i);
+		}    
+	}
+	
+
+///////////////////////  cover-ups to give eating effect //////////////////////
+
+	function blackRectangle(){
+
+		graphics.save();
+
+		graphics.translate(0.99,0);
+		graphics.scale(5,1);
+		filledRect();
+
+		graphics.restore();
+	}	
+
+	function yellowCircle(){  
+
+		graphics.save();
+
+		graphics.fillStyle="#fce700";
+		graphics.translate(0.25,0);
+		graphics.scale(0.52,0.52);
+		filledCircle();	
+
+		graphics.restore();
+	}
+
+	function yellowRectangle(){
+
+		graphics.save();
+
+		graphics.fillStyle="#fce700";
+		graphics.translate(0.22,0);
+		graphics.scale(0.48,0.41);
+		filledRect();
+
+		graphics.restore();
+	}
+	function yellowRectangle2(){
+
+		graphics.save();
+
+		graphics.fillStyle="#fce700";
+		graphics.translate(0.12,0.14);
+		graphics.rotate(-Math.PI/4.6);
+		graphics.scale(0.40,0.33);
+		filledRect();
+
+		graphics.restore();
+	}
+	function yellowRectangle3(){
+
+		graphics.save();
+
+		graphics.fillStyle="#fce700";
+		graphics.scale(1,-1);
+		graphics.translate(0.12,0.14);
+		graphics.rotate(-Math.PI/4.6);
+		graphics.scale(0.40,0.33);
+		filledRect();
+
+		graphics.restore();
+	}
+
+
+//////////////////////for Trail of moving characters///////////////////////////////	
+
+	function drawLeftMovingCharacters(){  // draws ghosts and pellet-covers moving left
+	
+	     graphics.save();
+		 
+		 graphics.translate(-runningFrame,0)
+
+		 graphics.translate(4,0);
+		 yellowRectangle3();
+		 yellowRectangle2();
+		 yellowRectangle();
+		 yellowCircle();
+		 
+
+		 graphics.translate(2,0);
+		 blackRectangle();
+		 drawGhost("#66c2ff","normal");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("red","normal");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("pink","normal");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("#fcbd00","normal");
+		 
+		 graphics.restore();
+	}
+
+	
+	function drawRightMovingCharacters(){ // draws pac-man and ghosts moving right
+	
+	     graphics.save();
+		 
+		 graphics.translate(-runningFrame,0)
+		 
+		 graphics.translate(4,0);
+		 drawRightPacMan();
+
+		 graphics.translate(2,0);
+		 drawGhost("blue","scared");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("blue","scared");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("blue","scared");
+
+		 graphics.translate(1.15,0);
+		 drawGhost("blue","scared");
+		 
+		 graphics.restore();
+	}
+
+////////////////////////for Pac-Man's food///////////////////////////
+
+	function pellet(x){  //draws a pellet that pac-man eats
+
+		graphics.save();
+
+		graphics.fillStyle = "white";
+        graphics.translate(x,0);
+		graphics.scale(0.24,0.24);
+	    filledCircle();
+
+		graphics.restore();
+	}
+
+
+	function fruitTop(){    //draws a fruit handle
+
+		graphics.save();
+
+		graphics.fillStyle="green";
+		graphics.translate(-16.1,0.168);
+		graphics.rotate(Math.PI/3);
+		graphics.scale(0.05,0.1)
+		filledRect();
+
+		graphics.restore();
+	}
+
+	function fruitGlow(){   //draws a transparent circle to give glowing effect 
+		
+		graphics.save(); 
+
+		graphics.globalAlpha = 0.2;
+		graphics.fillStyle="orange";
+		graphics.translate(-16,0)
+		graphics.scale(0.43,0.43)
+		filledCircle();
+
+		graphics.restore(); 
+	}
+	
+	function fruit(x){ //draws a fruit
+		
+		graphics.save();
+        fruitGlow();
+        fruitTop();
+		graphics.fillStyle = "orange";
+        graphics.translate(-16,0);
+		graphics.scale(0.32,0.32);
+		filledCircle();
+		
+		graphics.restore();
+	}
+
+
+	function drawPelletLine(){ // draws a trail of pac-man edibles
+
+		graphics.save();
+
+		for (let i =-5; i>=-15 ;i=i-1){
+			pellet(i);
+		}
+		fruit();
+	
+ 	    graphics.restore();
+	}
+
+
+
+	/**
+     *  Responsible for drawing the entire scene.  The display is filled with the background
+     *  color before this function is called.
+     */
+    function drawWorld() {
+		
+		graphics.translate(cameraFrame,0);
+		
+        y=x+0.1;
+		if (runFrame(y)-runFrame(x)>0){   //if the frame number for character movement is increasing
+		   drawLeftPacMan();
+		   drawPelletLine();
+		   drawLeftMovingCharacters();
+		}
+		else {
+		   drawRightMovingCharacters();
+		}
+		
+		 drawMap();
+		 triangleTrail();
+    }
+
+
+    /**
+     * This method is called just before each frame is drawn.  It updates the modeling
+     * transformations of the objects in the scene that are animated.
+     */
+    function updateFrame() {
+        
+	frameNumber++;
+	x = frameNumber*0.01;
+
+	mouthFrame = 18*Math.sin(frameNumber/14%12000);
+	cameraFrame = Math.abs( 10*Math.asin(Math.sin(x/1.7)));
+    runningFrame = runFrame(x)
+	ghostPupilFrame = 0.055*Math.abs( Math.asin(Math.sin(9*x)));
+
+    }
+
+	function runFrame(x){  //for readability in drawWorld() if statement
+		return Math.abs( 13.8*Math.asin(Math.sin(x/1.7)));
+	}
+ 
+
+
+
+
+    //------------------- Some methods for drawing basic shapes. ----------------
+    
+    function line(x1,y1,x2,y2) { // Draws a line from (-0.5,0) to (0.5,0)
+        graphics.beginPath();
+        graphics.moveTo(x1,y1);
+        graphics.lineTo(x2,y2);
+        graphics.stroke();
+    }
+
+    function rect() { // Strokes a square, size = 1, center = (0,0)
+        graphics.strokeRect(-0.5,-0.5,1,1);
+    }
+
+    function filledRect() { // Fills a square, size = 1, center = (0,0)
+        graphics.fillRect(-0.5,-0.5,1,1);
+    }
+
+    function circle() { // Strokes a circle, diameter = 1, center = (0,0)
+        graphics.beginPath();
+        graphics.arc(0,0,0.5,0,2*Math.PI);
+        graphics.stroke();
+    }
+
+    function filledCircle() { // Fills a circle, diameter = 1, center = (0,0)
+        graphics.beginPath();
+        graphics.arc(0,0,0.5,0,2*Math.PI);
+        graphics.fill();
+    }
+
+	function filledTriangle(g2,topLipX,topLipY,bottomLipX,bottomLipY) {// Filled Triangle, width 1, height 1, center of base at (0,0)
+		g2.beginPath();
+		g2.moveTo(-0.5,0);
+		g2.lineTo(topLipX,topLipY);
+		g2.lineTo(0,1);
+		g2.lineTo(bottomLipX,bottomLipY);
+		g2.fill();
+	}
+
+ 
+
+    
+    // ------------------------------- graphics support functions --------------------------
+    
+    /**
+      * Draw one frame of the animation.  Probably doesn't need to be changed,
+      * except maybe to change the setting of preserveAspect in applyLimits().
+      */
+    function draw() {
+        graphics.save();  // to make sure changes don't carry over from one call to the next
+        graphics.fillStyle = BACKGROUND;  // background color
+        graphics.fillRect(0,0,canvas.width,canvas.height);
+        graphics.fillStyle = "black";
+        applyLimits(graphics,X_LEFT,X_RIGHT,Y_TOP,Y_BOTTOM,false);
+        graphics.lineWidth = pixelSize;  // Use 1 pixel as the default line width
+        drawWorld();
+        graphics.restore();
+    }
+    
+    /**
+     * Applies a coordinate transformation to the graphics context, to map
+     * xleft,xright,ytop,ybottom to the edges of the canvas.  This is called
+     * by draw().  This does not need to be changed.
+     */
+    function applyLimits(g, xleft, xright, ytop, ybottom, preserveAspect) {
+       var width = canvas.width;   // The width of this drawing area, in pixels.
+       var height = canvas.height; // The height of this drawing area, in pixels.
+       if (preserveAspect) {
+             // Adjust the limits to match the aspect ratio of the drawing area.
+          var displayAspect = Math.abs(height / width);
+          var requestedAspect = Math.abs(( ybottom-ytop ) / ( xright-xleft ));
+          var excess;
+          if (displayAspect > requestedAspect) {
+             excess = (ybottom-ytop) * (displayAspect/requestedAspect - 1);
+             ybottom += excess/2;
+             ytop -= excess/2;
+          }
+          else if (displayAspect < requestedAspect) {
+             excess = (xright-xleft) * (requestedAspect/displayAspect - 1);
+             xright += excess/2;
+             xleft -= excess/2;
+          }
+       }
+       var pixelWidth = Math.abs(( xright - xleft ) / width);
+       var pixelHeight = Math.abs(( ybottom - ytop ) / height);
+       pixelSize = Math.min(pixelWidth,pixelHeight);
+       g.scale( width / (xright-xleft), height / (ybottom-ytop) );
+       g.translate( -xleft, -ytop );
+    }
+    
+    
+    //------------------ Animation framework ------------------------------
+    
+    var running = false;  // This is set to true when animation is running
+    
+    function frame() {
+        if (running) {
+               // Draw one frame of the animation, and schedule the next frame.
+            updateFrame();
+            draw();
+            requestAnimationFrame(frame);
+        }
+    }
+    
+    function doAnimationCheckbox() { 
+        var shouldRun = document.getElementById("animateCheck").checked;
+        if ( shouldRun != running ) {
+            running = shouldRun;
+            if (running)
+                requestAnimationFrame(frame);
+        }
+    }
+    
+    //----------------------- initialization -------------------------------
+
+    function init() {
+        canvas = document.getElementById("thecanvas");
+        if (!canvas.getContext) {
+            document.getElementById("message").innerHTML = "ERROR: Canvas not supported";
+            return;
+        }
+        graphics = canvas.getContext("2d");
+        document.getElementById("animateCheck").checked = false; 
+        document.getElementById("animateCheck").onchange = doAnimationCheckbox; 
+        draw();
+    }
+
+</script>
+
+</head>
+
+<body onload="init()" style="background-color:#EEEEEE">
+
+<h3>Pac-Man Subroutine</h3>
+
+<noscript>
+   <p><b style="color:red">Error: This page requires JavaScript, but it is not available.</b></p>
+</noscript>
+
+<p id="message"><label><input type="checkbox" id="animateCheck"><b>Run the Animation</b></label></p>
+
+<div style="float:left; border: 2px solid black">
+<canvas id="thecanvas" width="800" height="600" style="display:block"></canvas>
+</div>
+
+
+</body>
+</html>
